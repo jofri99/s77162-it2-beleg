@@ -3,7 +3,6 @@ Server
 usage: java Server [RTSP listening port]
 ---------------------- */
 
-import com.sun.org.apache.regexp.internal.RE;
 import java.io.*;
 import java.net.*;
 import java.awt.*;
@@ -24,7 +23,8 @@ public class Server extends JFrame implements ActionListener, ChangeListener {
   int RTP_dest_port = 0; // destination port for RTP packets  (given by the RTSP Client)
   int FEC_dest_port = 0; // destination port for RTP-FEC packets  (RTP or RTP+2)
   final static int startGroupSize = 2;
-  FecHandler fec = new FecHandler(startGroupSize);
+  FecHandler fec;
+  //FecHandler fec = new FecHandler(startGroupSize);
   // Channel errors
   private double lossRate = 0.0;
   Random random = new Random(123456); // fixed seed for debugging
@@ -79,7 +79,7 @@ public class Server extends JFrame implements ActionListener, ChangeListener {
     // init Timer
     timer = new Timer(FRAME_PERIOD, this);
     timer.setInitialDelay(0);
-    timer.setCoalesce(true);
+    timer.setCoalesce(false); // Coalesce can lead to buffer underflow in client
 
     // Handler to close the main window
     addWindowListener(
@@ -191,8 +191,9 @@ public class Server extends JFrame implements ActionListener, ChangeListener {
           theServer.video = new VideoReader(VideoFileName);
           imagenb = 0;
 
-          // init RTP socket
+          // init RTP socket and FEC
           theServer.RTPsocket = new DatagramSocket();
+          theServer.fec = new FecHandler(startGroupSize);
           break;
 
         case PLAY:
