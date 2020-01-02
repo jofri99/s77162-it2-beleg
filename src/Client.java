@@ -198,13 +198,13 @@ public class Client {
         // Init non-blocking RTPsocket that will be used to receive data
         try {
           // TASK construct a new DatagramSocket to receive server RTP packets on port RTP_RCV_PORT
-          RTPsocket = new DatagramSocket();
+          RTPsocket = new DatagramSocket(RTP_RCV_PORT);
 
           // for now FEC packets are received via RTP-Port, so keep comment below
           // FECsocket = new DatagramSocket(FEC_RCV_PORT);
 
           // TASK set Timeout value of the socket to 1 ms
-          // ....
+          RTPsocket.setSoTimeout(1);
           System.out.println("Socket receive buffer: " + RTPsocket.getReceiveBufferSize());
 
           // Init the FEC-handler
@@ -230,9 +230,9 @@ public class Client {
         if (parse_server_response() != 200) System.out.println("Invalid Server Response");
         else {
           // TASK change RTSP state and print new state to console and statusLabel
-          // state = ....
+          state = READY;
           // statusLabel
-          // System.out.println("New RTSP state: ");
+          System.out.println("New RTSP state: READY");
         }
       } // else if state != INIT then do nothing
     }
@@ -547,18 +547,16 @@ public class Client {
       if (request_type.equals("SETUP")) rtsp = rtsp + "/trackID=0";
 
       String rtspReq = "";
+      rtspReq = request_type + " " + rtsp + " RTSP/1.0" + CRLF;
       //TASK Complete the RTSP request method line
-      // rtspReq = ....
-
-      // TASK write the CSeq line:
-      // rtspReq += ....
+      rtspReq += "CSeq: " + RTSPSeqNb + CRLF;
 
       // check if request_type is equal to "SETUP" and in this case write the Transport: line
       // advertising to the server the port used to receive the RTP packets RTP_RCV_PORT
       // otherwise, write the Session line from the RTSPid field
       if (request_type.equals("SETUP")) {
         //TASK Complete the Transport Attribute
-        rtspReq += "Transport:";
+        rtspReq += "Transport: "+"RTP/UDP;unicast;client_port=" + RTP_RCV_PORT + "-" + (RTP_RCV_PORT + 1) + CRLF;
       }
 
       // SessionIS if available
