@@ -75,8 +75,8 @@ public class FecHandler {
     // init new FEC packet if necessary
     if (fec == null) {
       fec =
-          new FECpacket(
-              FEC_PT, fecSeqNr, rtp.gettimestamp(), fecGroupSize, rtp.getsequencenumber());
+              new FECpacket(
+                      FEC_PT, fecSeqNr, rtp.gettimestamp(), fecGroupSize, rtp.getsequencenumber());
       fec.setUlpLevelHeader(0, 0, fecGroupSize);
     }
 
@@ -157,7 +157,7 @@ public class FecHandler {
     // build fec from rtp
     fec = new FECpacket(rtp.getpacket(), rtp.getpacket().length);
     // TASK remove comment for debugging
-    // fec.printHeaders();
+    fec.printHeaders();
 
     // stores fec
     int seqNrFec = fec.getsequencenumber();
@@ -273,8 +273,21 @@ public class FecHandler {
    * @return true if possible
    */
   private boolean checkCorrection(int nr) {
-    //TASK complete this method!
-    return false;
+
+    int counterFail = 0;
+    List<Integer> list  = fecList.get(nr);
+
+    if (list == null)
+      return false;
+
+    for (Integer number : list) {
+      if (rtpStack.get(number) == null)
+        counterFail++;
+    }
+    if (counterFail > 1) {
+      return false;
+    }
+    return true;
   }
 
   /**
@@ -284,7 +297,17 @@ public class FecHandler {
    * @return RTP packet
    */
   private RTPpacket correctRtp(int nr) {
-    //TASK complete this method!
+    int Nnr = fecNr.get(nr);
+    fec = fecStack.get(Nnr);
+    List <Integer> liste = fecList.get(nr);
+
+    for (Integer number : liste) {
+      if (number != nr)
+        fec.addRtp(rtpStack.get(number));
+    }
+
+
+
     return fec.getLostRtp(nr);
   }
 
@@ -340,6 +363,8 @@ public class FecHandler {
   public int getNrNotCorrected() {
     return nrNotCorrected;
   }
+
+  public double getRatio(){ return  nrLost/100*nrCorrected;}
 
   /**
    * @return Number of requested but lost Video frames

@@ -86,11 +86,11 @@ public class Client {
     // build GUI
     // Frame
     f.addWindowListener(
-        new WindowAdapter() {
-          public void windowClosing(WindowEvent e) {
-            System.exit(0);
-          }
-        });
+            new WindowAdapter() {
+              public void windowClosing(WindowEvent e) {
+                System.exit(0);
+              }
+            });
 
     // Buttons
     buttonPanel.setLayout(new GridLayout(1, 0));
@@ -177,9 +177,9 @@ public class Client {
 
     // Set input and output stream filters:
     RTSPBufferedReader =
-        new BufferedReader(new InputStreamReader(theClient.RTSPsocket.getInputStream()));
+            new BufferedReader(new InputStreamReader(theClient.RTSPsocket.getInputStream()));
     RTSPBufferedWriter =
-        new BufferedWriter(new OutputStreamWriter(theClient.RTSPsocket.getOutputStream()));
+            new BufferedWriter(new OutputStreamWriter(theClient.RTSPsocket.getOutputStream()));
 
     // init RTSP state:
     state = INIT;
@@ -199,6 +199,7 @@ public class Client {
         try {
           // TASK construct a new DatagramSocket to receive server RTP packets on port RTP_RCV_PORT
           RTPsocket = new DatagramSocket(RTP_RCV_PORT);
+
 
           // for now FEC packets are received via RTP-Port, so keep comment below
           // FECsocket = new DatagramSocket(FEC_RCV_PORT);
@@ -231,10 +232,13 @@ public class Client {
         else {
           // TASK change RTSP state and print new state to console and statusLabel
           state = READY;
-          // statusLabel
+          statusLabel.setText("READY");
           System.out.println("New RTSP state: READY");
         }
-      } // else if state != INIT then do nothing
+      }  else if (state != INIT){
+
+
+      }
     }
   }
 
@@ -245,7 +249,7 @@ public class Client {
       System.out.println("Play Button pressed !");
       if (state == READY) {
         // TASK increase RTSP sequence number
-        // .....
+        RTSPSeqNb++;
 
         // Send PLAY message to the server
         send_RTSP_request("PLAY");
@@ -254,13 +258,15 @@ public class Client {
         if (parse_server_response() != 200) System.out.println("Invalid Server Response");
         else {
           //TASK change RTSP state and print out new state to console an statusLabel
-          // state = ....
+          state = PLAYING;
+          System.out.println("New RTSP state: PLAYING");
+          statusLabel.setText("PLAYING");
 
           // start the timer
           timer.start();
           timerPlay.start();
         }
-      } // else if state != READY then do nothing
+      } else if(state != READY){}
     }
   }
 
@@ -271,7 +277,7 @@ public class Client {
       System.out.println("Pause Button pressed !");
       if (state == PLAYING) {
         // TASK increase RTSP sequence number
-        // ....
+        RTSPSeqNb++;
 
         // Send PAUSE message to the server
         send_RTSP_request("PAUSE");
@@ -280,7 +286,9 @@ public class Client {
         if (parse_server_response() != 200) System.out.println("Invalid Server Response");
         else {
           // TASK change RTSP state and print out new state to console and statusLabel
-          // state = ....
+          state = READY;
+          System.out.println("New RTSP state: READY");
+          statusLabel.setText("READY");
 
           // stop the timer
           timer.stop();
@@ -288,7 +296,7 @@ public class Client {
           timerPlay.setInitialDelay(0);
         }
       }
-      // else if state != PLAYING then do nothing
+      else if (state != PLAYING){}
     }
   }
 
@@ -298,6 +306,7 @@ public class Client {
 
       System.out.println("Teardown Button pressed !");
       // TASK increase RTSP sequence number
+      RTSPSeqNb++;
 
       // Send TEARDOWN message to the server
       send_RTSP_request("TEARDOWN");
@@ -306,7 +315,9 @@ public class Client {
       if (parse_server_response() != 200) System.out.println("Invalid Server Response");
       else {
         // TASK change RTSP state and print out new state to console and statusLabel
-        // state = ....
+        state = INIT;
+        System.out.println("New RTSP state: TEARDOWN");
+        statusLabel.setText("TEARDOWN");
 
         // stop the timer
         timer.stop();
@@ -355,18 +366,18 @@ public class Client {
 
         // print important header fields of the RTP packet received:
         System.out.println(
-            "---------------- Receiver -----------------------"
-                + nl
-                + "Got RTP packet with SeqNum # "
-                + rtp.getsequencenumber()
-                + " TimeStamp: "
-                + (0xFFFFFFFFL & rtp.gettimestamp()) // cast to long
-                + " ms, of type "
-                + rtp.getpayloadtype()
-                + " Size: " + rtp.getlength());
+                "---------------- Receiver -----------------------"
+                        + nl
+                        + "Got RTP packet with SeqNum # "
+                        + rtp.getsequencenumber()
+                        + " TimeStamp: "
+                        + (0xFFFFFFFFL & rtp.gettimestamp()) // cast to long
+                        + " ms, of type "
+                        + rtp.getpayloadtype()
+                        + " Size: " + rtp.getlength());
 
         // TASK remove comment for debugging
-        // rtp.printheader(); // print rtp header bitstream for debugging
+        rtp.printheader(); // print rtp header bitstream for debugging
         fec.rcvRtpPacket(rtp); // stores the received RTP packet in jitter buffer
 
       } catch (InterruptedIOException iioe) {
@@ -409,7 +420,7 @@ public class Client {
 
       payload = JpegFrame.combineToOneImage(rtpList);
       System.out.println("Display TS: " + (0xFFFFFFFFL & rtpList.get(0).TimeStamp)
-          + " size: " + payload.length);
+              + " size: " + payload.length);
 
       try {
         // get an Image object from the payload bitstream
@@ -425,29 +436,29 @@ public class Client {
       }
     }
 
-      //TASK complete the statistics
+    //TASK complete the statistics
     private void setStatistics() {
       DecimalFormat df = new DecimalFormat("###.###");
       pufferLabel.setText(
-          "Puffer: "
-              + ""  //
-              + " aktuelle Nr. / Summe empf.: "
-              + " / "
-              + "");
+              "Puffer: "
+                      + ""  //
+                      + " aktuelle Nr. / Summe empf.: " + fec.getSeqNr()  + " / "+ fec.getNrReceived()
+                      + "");
       statsLabel.setText(
-          "<html>Abspielzähler / verlorene Medienpakete // Bilder / verloren: "
-              + ""
-              + " / "
-              + ""
-              + "<p/>"
-              + "</html>");
+              "<html>Abspielzähler / verlorene Bilder: "
+                      + fec.getPlayCounter()
+                      + " / "
+                      + fec.getNrLost()
+                      + "<p/>"
+                      + "</html>");
       fecLabel.setText(
-          "FEC: korrigiert / nicht korrigiert: "
-              + ""
-              + " / "
-              + ""
-              + "  Ratio: "
-              + "");
+              "FEC: korrigiert / nicht korrigiert: "
+                      + fec.getNrCorrected()
+                      + " / "
+                      + fec.getNrNotCorrected()
+                      + "  Ratio: "
+                      + (double)(fec.getPlayCounter()/100*fec.getNrNotCorrected())
+                      + "");
     }
   }
 
@@ -467,7 +478,9 @@ public class Client {
 
       String line;
       do {
+        System.out.println("loop");
         line = RTSPBufferedReader.readLine();
+        System.out.println(("after readline"));
         System.out.println(line);
         if (!line.equals("")) respLines.add(line);
       } while (!line.equals(""));
