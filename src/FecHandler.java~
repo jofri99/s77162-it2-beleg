@@ -273,7 +273,8 @@ public class FecHandler {
    * @return true if possible
    */
   private boolean checkCorrection(int nr) {
-  	int counterFail = 0;
+
+    int counterFail = 0;
     List<Integer> list  = fecList.get(nr);
 
     if (list == null)
@@ -281,9 +282,7 @@ public class FecHandler {
 
     for (Integer number : list) {
       if (rtpStack.get(number) == null)
-      {
         counterFail++;
-      }
     }
     if (counterFail > 1) {
       return false;
@@ -304,9 +303,7 @@ public class FecHandler {
 
     for (Integer number : liste) {
       if (number != nr)
-      	  {
-      	  fec.addRtp(rtpStack.get(number));
-      	  }   
+        fec.addRtp(rtpStack.get(number));
     }
 
 
